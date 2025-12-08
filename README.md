@@ -4,7 +4,7 @@ A modern, high-performance web viewer for unencrypted WhatsApp `msgstore.db` fil
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Open%20App-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://trevordixon.github.io/whatsapp-msgstore-web-viewer/)
 
-Download the sample msgstore.db from this repository to test.
+[Download the sample msgstore.db](https://github.com/trevordixon/whatsapp-msgstore-web-viewer/raw/refs/heads/main/msgstore.db) from this repository to test.
 
 ## 🔒 Privacy First
 
