@@ -3,7 +3,7 @@ import { initDatabase, getConversations, getMessages } from './services/dbServic
 import { ConversationList } from './components/ConversationList';
 import { ChatWindow } from './components/ChatWindow';
 import { Conversation, Message } from './types';
-import { Database, Upload, AlertCircle } from 'lucide-react';
+import { Database, Upload, AlertCircle, Download } from 'lucide-react';
 
 const App: React.FC = () => {
   const [dbLoaded, setDbLoaded] = useState(false);
@@ -95,6 +95,18 @@ const App: React.FC = () => {
               onChange={handleFileChange} 
             />
           </label>
+
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500 mb-2">Don't have a file?</p>
+            <a 
+              href="https://github.com/trevordixon/whatsapp-msgstore-web-viewer/raw/refs/heads/main/msgstore.db" 
+              className="inline-flex items-center text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
+              download
+            >
+              <Download size={16} className="mr-1.5" />
+              Download sample msgstore.db
+            </a>
+          </div>
 
           {error && (
             <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-start text-left text-sm border border-red-200">
