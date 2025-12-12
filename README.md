@@ -6,13 +6,13 @@ A modern, high-performance web viewer for WhatsApp `msgstore.db` (and `msgstore.
 
 [Download the sample msgstore.db](https://github.com/trevordixon/whatsapp-msgstore-web-viewer/raw/refs/heads/main/msgstore.db) from this repository to test.
 
-## 🔒 Privacy First
+## Privacy First
 
 **Your data never leaves your computer.** 
 
 This application runs entirely in your browser. The database file is processed locally using WebAssembly (SQL.js). No data is uploaded to any server, ensuring your conversations remain private.
 
-## ✨ Features
+## Features
 
 *   **Modern UI:** A clean interface inspired by WhatsApp Web.
 *   **Fast & Local:** instant loading and querying of SQLite databases directly in the browser.
@@ -20,7 +20,7 @@ This application runs entirely in your browser. The database file is processed l
 *   **Date Grouping:** Messages are intuitively grouped by "Today", "Yesterday", and specific dates.
 *   **Responsive:** Works on desktop and mobile.
 
-## 🚀 How to Use
+## How to Use
 
 1.  **Obtain your database:** You need a `msgstore.db` file (encrypted or unencrypted).
     *   *Note: Standard backups found in Android/WhatsApp/Databases are usually encrypted (e.g., `msgstore.db.crypt14`).*
@@ -44,7 +44,7 @@ We now support opening encrypted WhatsApp databases directly.
 > **Note:** Decryption is typically verified on `crypt15` files. Older formats may work but are heuristic-based.
 
 
-## 📸 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/a2f878a2-e34d-47da-8a34-54f9b48b073a" alt="Landing Page" width="45%">
@@ -52,7 +52,7 @@ We now support opening encrypted WhatsApp databases directly.
   <img src="https://github.com/user-attachments/assets/685b372c-985e-4e68-8063-3cd5d465dd2b" alt="Chat View" width="45%">
 </p>
 
-## 🛠️ Running Locally
+## Running Locally
 
 Pull requests are welcome! If you want to contribute or run this on your own machine:
 
@@ -77,6 +77,6 @@ Pull requests are welcome! If you want to contribute or run this on your own mac
     npm run build
     ```
 
-## 📄 License
+## License
 
 Open source. Feel free to fork and improve!
