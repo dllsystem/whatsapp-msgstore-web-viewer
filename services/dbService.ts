@@ -133,9 +133,42 @@ export const initDatabase = async (buffer: ArrayBuffer): Promise<void> => {
 export const getConversations = (limit: number = 1000): Conversation[] => {
   if (!dbInstance) return [];
 
-  // Note: Schema compatibility can vary by WA version. 
-  // This query attempts to fetch standard fields.
-  const query = `
+  // Preferred query for modern WA schemas:
+  // - Converts LID-only IDs to real phone numbers via jid_map.
+  // - Tries to resolve a usable contact name when available.
+  const mappedQuery = `
+    SELECT
+      chat._id,
+      COALESCE(jid_phone.user, jid.user) AS resolved_user,
+      COALESCE(
+        chat.subject,
+        CASE
+          -- In many databases this column stores masked numbers (e.g. +55∙∙∙∙),
+          -- so only use it when it does not look masked.
+          WHEN lid_display_name.display_name IS NOT NULL
+           AND trim(lid_display_name.display_name) <> ''
+           AND instr(lid_display_name.display_name, '∙') = 0
+          THEN lid_display_name.display_name
+          ELSE NULL
+        END
+      ) AS resolved_subject,
+      chat.sort_timestamp
+    FROM
+      chat
+    LEFT JOIN
+      jid ON chat.jid_row_id = jid._id
+    LEFT JOIN
+      jid_map ON jid_map.lid_row_id = jid._id
+    LEFT JOIN
+      jid AS jid_phone ON jid_phone._id = jid_map.jid_row_id
+    LEFT JOIN
+      lid_display_name ON lid_display_name.lid_row_id = jid._id
+    ORDER BY chat.sort_timestamp DESC
+    LIMIT ${limit}
+  `;
+
+  // Legacy fallback for older schemas without jid_map/lid_display_name.
+  const legacyQuery = `
     SELECT
       chat._id,
       jid.user,
@@ -148,7 +181,11 @@ export const getConversations = (limit: number = 1000): Conversation[] => {
   `;
 
   try {
-    const res = dbInstance.exec(query);
+    let res = dbInstance.exec(mappedQuery);
+    if (res.length === 0) {
+      return [];
+    }
+
     if (res.length > 0 && res[0].values) {
       return res[0].values.map((row: any[]) => ({
         _id: row[0],
@@ -158,9 +195,23 @@ export const getConversations = (limit: number = 1000): Conversation[] => {
       }));
     }
     return [];
-  } catch (e) {
-    console.error("Error fetching conversations:", e);
-    throw new Error("Failed to query conversations. Database schema might be incompatible.");
+  } catch (mappedQueryError) {
+    // If modern columns/tables are missing, use the previous compatible query.
+    try {
+      const res = dbInstance.exec(legacyQuery);
+      if (res.length > 0 && res[0].values) {
+        return res[0].values.map((row: any[]) => ({
+          _id: row[0],
+          jid: row[1] || 'Unknown',
+          subject: row[2],
+          timestamp: row[3],
+        }));
+      }
+      return [];
+    } catch (legacyQueryError) {
+      console.error("Error fetching conversations:", mappedQueryError, legacyQueryError);
+      throw new Error("Failed to query conversations. Database schema might be incompatible.");
+    }
   }
 };
 
