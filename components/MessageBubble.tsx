@@ -22,7 +22,11 @@ const buildMediaUrl = (baseUrl: string, filePath: string) => {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, mediaServerUrl }) => {
   const isSent = message.from_me;
+  const mediaFilePath = message.media_file_path || message.media_file_name || 'arquivo-desconhecido';
   const mediaFileName = message.media_file_name || message.media_file_path || 'arquivo-desconhecido';
+  const downloadFileName =
+    message.media_file_name ||
+    (message.media_file_path ? message.media_file_path.split('/').pop() || 'arquivo-desconhecido' : 'arquivo-desconhecido');
   const mediaTypeLabel = message.media_type_label || 'Desconhecido';
   const mediaMime = message.media_mime || 'unknown/unknown';
   const showMediaMetadata = Boolean(
@@ -40,6 +44,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, mediaServ
   );
   const [previewError, setPreviewError] = useState(false);
   const showMediaPreview = showMediaMetadata && canPreviewMediaKind && Boolean(mediaUrl) && !previewError;
+  const canDownloadNonPreviewMedia = showMediaMetadata && !canPreviewMediaKind && Boolean(mediaUrl);
 
   useEffect(() => {
     setPreviewError(false);
@@ -100,7 +105,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, mediaServ
             <div className={`${message.text_data ? 'mt-2' : 'mt-1'} rounded-md bg-black/5 px-2 py-1.5 text-xs break-all`}>
               <div>
                 <span className="font-semibold text-gray-600">Arquivo:</span>{' '}
-                <span className="text-gray-700">{mediaFileName}</span>
+                <span className="text-gray-700">{mediaFilePath}</span>
               </div>
               <div className="mt-1">
                 <span className="font-semibold text-gray-600">Tipo:</span>{' '}
@@ -143,6 +148,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, mediaServ
               {!showMediaPreview && canPreviewMediaKind && mediaUrl && (
                 <div className="mt-2 text-[11px] text-amber-700">
                   Conteudo indisponivel nesta URL.
+                </div>
+              )}
+              {canDownloadNonPreviewMedia && mediaUrl && (
+                <div className="mt-2">
+                  <span className="font-semibold text-gray-600">Conteudo:</span>
+                  <div className="mt-1">
+                    <a
+                      href={mediaUrl}
+                      download={downloadFileName}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center px-2.5 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      Baixar arquivo
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
