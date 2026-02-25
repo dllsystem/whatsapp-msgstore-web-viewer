@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Message } from '../types';
 import { Check, Image as ImageIcon } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
+  mediaServerUrl: string;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+const buildMediaUrl = (baseUrl: string, filePath: string) => {
+  const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
+  if (!normalizedBase) return null;
+
+  const encodedPath = filePath
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+  return encodedPath ? `${normalizedBase}/${encodedPath}` : null;
+};
+
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, mediaServerUrl }) => {
   const isSent = message.from_me;
   const mediaFileName = message.media_file_name || message.media_file_path || 'arquivo-desconhecido';
   const mediaTypeLabel = message.media_type_label || 'Desconhecido';
@@ -18,6 +32,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     message.media_mime ||
     message.media_type_label
   );
+  const canPreviewMediaKind =
+    message.media_kind === 'image' || message.media_kind === 'video' || message.media_kind === 'audio';
+  const mediaUrl = useMemo(
+    () => (message.media_file_path ? buildMediaUrl(mediaServerUrl, message.media_file_path) : null),
+    [mediaServerUrl, message.media_file_path]
+  );
+  const [previewError, setPreviewError] = useState(false);
+  const showMediaPreview = showMediaMetadata && canPreviewMediaKind && Boolean(mediaUrl) && !previewError;
+
+  useEffect(() => {
+    setPreviewError(false);
+  }, [mediaUrl]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -80,6 +106,45 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 <span className="font-semibold text-gray-600">Tipo:</span>{' '}
                 <span className="text-gray-700">{`${mediaTypeLabel} (${mediaMime})`}</span>
               </div>
+              {showMediaPreview && mediaUrl && (
+                <div className="mt-2">
+                  <span className="font-semibold text-gray-600">Conteudo:</span>
+                  <div className="mt-1">
+                    {message.media_kind === 'image' && (
+                      <img
+                        src={mediaUrl}
+                        alt={mediaFileName}
+                        loading="lazy"
+                        onError={() => setPreviewError(true)}
+                        className="max-h-64 w-auto max-w-full rounded border border-gray-200 bg-white"
+                      />
+                    )}
+                    {message.media_kind === 'video' && (
+                      <video
+                        src={mediaUrl}
+                        controls
+                        preload="metadata"
+                        onError={() => setPreviewError(true)}
+                        className="max-h-64 w-full rounded border border-gray-200 bg-black"
+                      />
+                    )}
+                    {message.media_kind === 'audio' && (
+                      <audio
+                        src={mediaUrl}
+                        controls
+                        preload="metadata"
+                        onError={() => setPreviewError(true)}
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+              {!showMediaPreview && canPreviewMediaKind && mediaUrl && (
+                <div className="mt-2 text-[11px] text-amber-700">
+                  Conteudo indisponivel nesta URL.
+                </div>
+              )}
             </div>
           )}
         </div>
