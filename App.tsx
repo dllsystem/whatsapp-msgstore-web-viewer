@@ -7,6 +7,13 @@ import { Database, Upload, AlertCircle, Download, Key, Loader } from 'lucide-rea
 import { detectEncryptionType, extractKey, decryptDatabase, EncryptionType } from './services/encryptionService';
 import { KeyEntryModal } from './components/KeyEntryModal';
 
+const defaultDbEntries = import.meta.glob('./db/msgstore.db', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+const defaultDbUrl = Object.values(defaultDbEntries)[0] ?? null;
+
 const App: React.FC = () => {
   const [dbLoaded, setDbLoaded] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -21,6 +28,7 @@ const App: React.FC = () => {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [progressStatus, setProgressStatus] = useState("Decrypting...");
+  const [isAutoLoading, setIsAutoLoading] = useState(true);
 
   // Settings
   const [maxChats, setMaxChats] = useState(1000);
@@ -141,6 +149,41 @@ const App: React.FC = () => {
     }, 10);
   };
 
+  // Auto-load local sample DB if it exists under db/msgstore.db
+  useEffect(() => {
+    let isCancelled = false;
+
+    const tryAutoLoadLocalDb = async () => {
+      try {
+        if (!defaultDbUrl) return;
+
+        const response = await fetch(defaultDbUrl, { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const buffer = await response.arrayBuffer();
+        if (buffer.byteLength === 0) return;
+
+        await initDatabase(buffer);
+        if (isCancelled) return;
+
+        setDbLoaded(true);
+        loadChats(maxChats);
+      } catch {
+        // Ignore: If the file is missing or invalid, keep manual upload flow.
+      } finally {
+        if (!isCancelled) {
+          setIsAutoLoading(false);
+        }
+      }
+    };
+
+    tryAutoLoadLocalDb();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   // Reload chats if settings change and DB is loaded
   useEffect(() => {
     if (dbLoaded) {
@@ -167,6 +210,13 @@ const App: React.FC = () => {
             Open your <code>msgstore.db</code> file to view chats, messages, and history in a clean interface.
             <br /><span className="text-xs text-gray-400 mt-2 block">(No data is uploaded. Everything is processed locally in your browser.)</span>
           </p>
+
+          {isAutoLoading && (
+            <div className="mb-6 inline-flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+              <Loader size={16} className="mr-2 animate-spin text-green-600" />
+              Looking for <code className="ml-1">db/msgstore.db</code>...
+            </div>
+          )}
 
           <label className="block w-full cursor-pointer group">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-green-500 hover:bg-green-50 transition-all flex flex-col items-center">

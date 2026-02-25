@@ -8,6 +8,16 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isSent = message.from_me;
+  const mediaFileName = message.media_file_name || message.media_file_path || 'arquivo-desconhecido';
+  const mediaTypeLabel = message.media_type_label || 'Desconhecido';
+  const mediaMime = message.media_mime || 'unknown/unknown';
+  const showMediaMetadata = Boolean(
+    message.has_media ||
+    message.media_file_name ||
+    message.media_file_path ||
+    message.media_mime ||
+    message.media_type_label
+  );
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -44,13 +54,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         )}
 
         {/* Content */}
-        <div className="text-gray-900 px-1 leading-relaxed whitespace-pre-wrap break-words min-w-0 w-full" style={{ wordBreak: 'break-word' }}>
+        <div className="text-gray-900 px-1 leading-relaxed min-w-0 w-full" style={{ wordBreak: 'break-word' }}>
           {message.text_data ? (
-            message.text_data
-          ) : (
+            <div className="whitespace-pre-wrap break-words">
+              {message.text_data}
+            </div>
+          ) : showMediaMetadata ? (
             <div className="flex items-center text-gray-500 italic py-1">
               <ImageIcon size={16} className="mr-2" />
               <span>Media omitted</span>
+            </div>
+          ) : (
+            <div className="text-gray-500 italic py-1">
+              Mensagem sem conteudo
+            </div>
+          )}
+
+          {showMediaMetadata && (
+            <div className={`${message.text_data ? 'mt-2' : 'mt-1'} rounded-md bg-black/5 px-2 py-1.5 text-xs break-all`}>
+              <div>
+                <span className="font-semibold text-gray-600">Arquivo:</span>{' '}
+                <span className="text-gray-700">{mediaFileName}</span>
+              </div>
+              <div className="mt-1">
+                <span className="font-semibold text-gray-600">Tipo:</span>{' '}
+                <span className="text-gray-700">{`${mediaTypeLabel} (${mediaMime})`}</span>
+              </div>
             </div>
           )}
         </div>
